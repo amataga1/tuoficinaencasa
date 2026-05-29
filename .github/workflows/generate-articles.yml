@@ -1,0 +1,76 @@
+name: Generate Articles
+
+on:
+  workflow_dispatch:
+    inputs:
+      keywords_json:
+        description: 'JSON array of {keyword, categoryId, categoryName}'
+        required: true
+        type: string
+      site_url:
+        description: 'Site URL'
+        required: false
+        default: 'https://seo-platform-two.vercel.app'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Generate articles
+        run: |
+          KEYWORDS='${{ github.event.inputs.keywords_json }}'
+          SITE_URL='${{ github.event.inputs.site_url }}'
+          SUPABASE_KEY='${{ secrets.SUPABASE_SERVICE_KEY }}'
+          SUPABASE_URL='https://ibccdbgjmrxzyfuoaupm.supabase.co'
+
+          echo "$KEYWORDS" | python3 -c "
+          import sys, json, urllib.request, urllib.error, time
+
+          keywords = json.load(sys.stdin)
+          site_url = '$SITE_URL'
+          supabase_url = '$SUPABASE_URL'
+          supabase_key = '$SUPABASE_KEY'
+          ok = 0
+          fail = 0
+
+          for i, item in enumerate(keywords):
+              print(f'[{i+1}/{len(keywords)}] Generating: {item[\"keyword\"]}')
+              payload = json.dumps({
+                  'keyword': item['keyword'],
+                  'categoryId': item['categoryId'],
+                  'categoryName': item['categoryName'],
+                  'intent': 'informational'
+              }).encode()
+              try:
+                  req = urllib.request.Request(
+                      f'{site_url}/api/generate',
+                      data=payload,
+                      headers={'Content-Type': 'application/json'},
+                      method='POST'
+                  )
+                  with urllib.request.urlopen(req, timeout=120) as resp:
+                      data = json.loads(resp.read())
+                      article_id = data['article']['id']
+                      # Publish immediately
+                      pub_payload = json.dumps({'status': 'published', 'published_at': time.strftime('%Y-%m-%dT%H:%M:%SZ')}).encode()
+                      pub_req = urllib.request.Request(
+                          f'{supabase_url}/rest/v1/articles?id=eq.{article_id}',
+                          data=pub_payload,
+                          headers={
+                              'Content-Type': 'application/json',
+                              'apikey': supabase_key,
+                              'Authorization': f'Bearer {supabase_key}'
+                          },
+                          method='PATCH'
+                      )
+                      urllib.request.urlopen(pub_req, timeout=10)
+                      ok += 1
+                      print(f'  OK: {data[\"article\"][\"title\"]}')
+              except Exception as e:
+                  fail += 1
+                  print(f'  FAIL: {e}')
+              time.sleep(6)
+
+          print(f'Done: {ok} ok, {fail} failed')
+          "
