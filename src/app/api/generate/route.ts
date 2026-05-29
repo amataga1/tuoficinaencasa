@@ -5,21 +5,85 @@ import slugify from 'slugify'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// Curated Unsplash photos by topic — direct URLs, no redirect, no API key needed
+const TOPIC_IMAGES: Record<string, string[]> = {
+  silla: [
+    'photo-1592078615290-033ee584e267',
+    'photo-1541558869434-2840d308329a',
+    'photo-1580480055273-228ff5388ef8',
+    'photo-1555041469-a586c61ea9bc',
+  ],
+  escritorio: [
+    'photo-1593640408182-31c228b42d1b',
+    'photo-1518455027359-f3f8164ba6bd',
+    'photo-1593642632559-0c6d3fc62b89',
+    'photo-1611269154421-4e27233ac5c7',
+  ],
+  monitor: [
+    'photo-1527443224154-c4a3942d3acf',
+    'photo-1547082299-de196ea013d6',
+    'photo-1587202372634-32705e3bf49c',
+    'photo-1593642702821-c8da6771f0c6',
+  ],
+  iluminacion: [
+    'photo-1507003211169-0a1dd7228f2d',
+    'photo-1513506003901-1e6a35fb5977',
+    'photo-1555041469-a586c61ea9bc',
+    'photo-1586023492125-27b2c045efd7',
+  ],
+  teclado: [
+    'photo-1587829741301-dc798b83add3',
+    'photo-1618384887929-16ec33fab9ef',
+    'photo-1541140532154-b024d705b90a',
+    'photo-1593642702821-c8da6771f0c6',
+  ],
+  raton: [
+    'photo-1527864550417-7fd91fc51a46',
+    'photo-1587829741301-dc798b83add3',
+    'photo-1593642702821-c8da6771f0c6',
+    'photo-1618384887929-16ec33fab9ef',
+  ],
+  auricular: [
+    'photo-1505740420928-5e560c06d30e',
+    'photo-1558756520-22cfe5d382ca',
+    'photo-1546435770-a3e426bf472b',
+    'photo-1484704849700-f032a568e944',
+  ],
+  default: [
+    'photo-1497366216548-37526070297c',
+    'photo-1498050108023-c5249f4df085',
+    'photo-1486312338219-ce68d2c6f44d',
+    'photo-1593079831268-3381b0db4a77',
+    'photo-1586023492125-27b2c045efd7',
+    'photo-1611532736597-de2d4265fba3',
+  ],
+}
+
+function getImageForKeyword(keyword: string): string {
+  const kw = keyword.toLowerCase()
+  let pool = TOPIC_IMAGES.default
+  for (const [topic, imgs] of Object.entries(TOPIC_IMAGES)) {
+    if (kw.includes(topic)) { pool = imgs; break }
+  }
+  const photoId = pool[Math.floor(Math.random() * pool.length)]
+  return `https://images.unsplash.com/${photoId}?w=1200&q=80`
+}
+
 async function fetchUnsplashImage(keyword: string): Promise<string | null> {
   try {
     const accessKey = process.env.UNSPLASH_ACCESS_KEY
-    if (!accessKey) {
-      // Fallback: use source.unsplash.com (no key needed, random relevant photo)
-      const query = encodeURIComponent(keyword.split(' ').slice(0, 3).join(' '))
-      return `https://source.unsplash.com/1200x630/?${query}`
+    if (accessKey) {
+      const q = encodeURIComponent(keyword)
+      const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.urls?.regular) return data.urls.regular
+      }
     }
-    const q = encodeURIComponent(keyword)
-    const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.urls?.regular ?? null
+    // Fallback: curated pool by keyword topic
+    return getImageForKeyword(keyword)
   } catch {
-    return null
+    return getImageForKeyword(keyword)
   }
 }
 
