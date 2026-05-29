@@ -93,7 +93,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           </div>
 
           <div className="border-t border-gray-800 mt-10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-600">
-            <p>© {new Date().getFullYear()} {process.env.NEXT_PUBLIC_SITE_NAME || 'Setup Oficina'}. Todos los derechos reservados.</p>
+            <p>© 2026 {process.env.NEXT_PUBLIC_SITE_NAME || 'Setup Oficina'}. Todos los derechos reservados.</p>
             <p>Hecho con ❤️ para trabajadores remotos en España</p>
           </div>
         </div>
