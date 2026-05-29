@@ -7,64 +7,99 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // Curated Unsplash photos by topic — direct URLs, no redirect, no API key needed
 const TOPIC_IMAGES: Record<string, string[]> = {
+  // Sillas ergonómicas — fotos específicas de sillas de oficina ergonómicas
   silla: [
-    'photo-1592078615290-033ee584e267',
-    'photo-1541558869434-2840d308329a',
-    'photo-1580480055273-228ff5388ef8',
-    'photo-1555041469-a586c61ea9bc',
+    'photo-1589884629038-b631346a23c4', // silla oficina ergonómica negra
+    'photo-1598300042247-d088f8ab3a91', // silla ergonómica moderna oficina
+    'photo-1555041469-a586c61ea9bc',    // silla oficina diseño
+    'photo-1567538096630-e0c55bd6374c', // silla escritorio ergonómica
   ],
+  // Escritorios home office
   escritorio: [
-    'photo-1593640408182-31c228b42d1b',
-    'photo-1518455027359-f3f8164ba6bd',
-    'photo-1593642632559-0c6d3fc62b89',
-    'photo-1611269154421-4e27233ac5c7',
+    'photo-1593640408182-31c228b42d1b', // escritorio elevable blanco
+    'photo-1611269154421-4e27233ac5c7', // setup escritorio minimalista
+    'photo-1593642632559-0c6d3fc62b89', // escritorio con monitor
+    'photo-1518455027359-f3f8164ba6bd', // escritorio de madera home office
   ],
+  // Monitores
   monitor: [
-    'photo-1527443224154-c4a3942d3acf',
-    'photo-1547082299-de196ea013d6',
-    'photo-1587202372634-32705e3bf49c',
-    'photo-1593642702821-c8da6771f0c6',
+    'photo-1527443224154-c4a3942d3acf', // monitor de escritorio
+    'photo-1547082299-de196ea013d6',    // monitor curvo
+    'photo-1587202372634-32705e3bf49c', // doble monitor setup
+    'photo-1593642702821-c8da6771f0c6', // monitor gaming/trabajo
   ],
+  // Iluminación escritorio
   iluminacion: [
-    'photo-1507003211169-0a1dd7228f2d',
-    'photo-1513506003901-1e6a35fb5977',
-    'photo-1555041469-a586c61ea9bc',
-    'photo-1586023492125-27b2c045efd7',
+    'photo-1513506003901-1e6a35fb5977', // lámpara escritorio moderna
+    'photo-1507003211169-0a1dd7228f2d', // luz escritorio led
+    'photo-1555680202-c86f0e12f086',    // iluminación home office
+    'photo-1616628188859-7a11abb6fcc9', // ring light videollamada
   ],
+  // Teclados mecánicos
   teclado: [
-    'photo-1587829741301-dc798b83add3',
-    'photo-1618384887929-16ec33fab9ef',
-    'photo-1541140532154-b024d705b90a',
-    'photo-1593642702821-c8da6771f0c6',
+    'photo-1587829741301-dc798b83add3', // teclado mecánico rgb
+    'photo-1618384887929-16ec33fab9ef', // teclado mecánico blanco
+    'photo-1541140532154-b024d705b90a', // teclado escritorio setup
+    'photo-1614680376573-df3480f0c6b8', // teclado mecánico compacto
   ],
+  // Ratones ergonómicos
   raton: [
-    'photo-1527864550417-7fd91fc51a46',
-    'photo-1587829741301-dc798b83add3',
-    'photo-1593642702821-c8da6771f0c6',
-    'photo-1618384887929-16ec33fab9ef',
+    'photo-1527864550417-7fd91fc51a46', // ratón ergonómico escritorio
+    'photo-1613141412572-8b8d1b5e1c53', // ratón inalámbrico
+    'photo-1587829741301-dc798b83add3', // periféricos escritorio
+    'photo-1616400619175-5beda3a17896', // ratón vertical ergonómico
   ],
+  // Auriculares
   auricular: [
-    'photo-1505740420928-5e560c06d30e',
-    'photo-1558756520-22cfe5d382ca',
-    'photo-1546435770-a3e426bf472b',
-    'photo-1484704849700-f032a568e944',
+    'photo-1505740420928-5e560c06d30e', // auriculares over-ear
+    'photo-1484704849700-f032a568e944', // auriculares escritorio
+    'photo-1546435770-a3e426bf472b',    // auriculares profesionales
+    'photo-1583394838336-acd977736f90', // auriculares trabajo
   ],
+  // Webcam / cámara
+  webcam: [
+    'photo-1587825140708-dfaf72ae4b04', // videollamada trabajo
+    'photo-1593642632559-0c6d3fc62b89', // setup streaming
+    'photo-1611532736597-de2d4265fba3', // home office videollamada
+    'photo-1516387938699-a927048f1897', // persona videollamada
+  ],
+  // Micrófono
+  microfono: [
+    'photo-1478737270239-2f02b77fc618', // micrófono de escritorio
+    'photo-1593642632559-0c6d3fc62b89', // setup podcast home
+    'photo-1598550476439-6847785fcea6', // micrófono profesional
+    'photo-1525201548942-d8732f6617a0', // micrófono condensador
+  ],
+  // Productividad / setup general
   default: [
-    'photo-1497366216548-37526070297c',
-    'photo-1498050108023-c5249f4df085',
-    'photo-1486312338219-ce68d2c6f44d',
-    'photo-1593079831268-3381b0db4a77',
-    'photo-1586023492125-27b2c045efd7',
-    'photo-1611532736597-de2d4265fba3',
+    'photo-1497366216548-37526070297c', // oficina moderna minimalista
+    'photo-1497366811353-6870744d04b2', // home office limpio
+    'photo-1486312338219-ce68d2c6f44d', // persona trabajando laptop
+    'photo-1611532736597-de2d4265fba3', // setup completo home office
+    'photo-1593079831268-3381b0db4a77', // escritorio trabajo remoto
+    'photo-1524758631624-e2822e304c36', // habitación home office
   ],
 }
 
+const KEYWORD_MAP: Record<string, string> = {
+  silla: 'silla', sillas: 'silla', chair: 'silla', lumbar: 'silla', asiento: 'silla', ergon: 'silla',
+  escritorio: 'escritorio', desk: 'escritorio', mesa: 'escritorio', elevable: 'escritorio', pie: 'escritorio',
+  monitor: 'monitor', pantalla: 'monitor', ultrawide: 'monitor', curvo: 'monitor', '4k': 'monitor',
+  iluminaci: 'iluminacion', luz: 'iluminacion', lampara: 'iluminacion', led: 'iluminacion', ring: 'webcam',
+  teclado: 'teclado', keyboard: 'teclado', mec: 'teclado',
+  rat: 'raton', mouse: 'raton', trackpad: 'raton',
+  auricul: 'auricular', headset: 'auricular', cascos: 'auricular', sonido: 'auricular',
+  webcam: 'webcam', camara: 'webcam', video: 'webcam', zoom: 'webcam', streaming: 'webcam',
+  micro: 'microfono', podcast: 'microfono',
+}
+
 function getImageForKeyword(keyword: string): string {
-  const kw = keyword.toLowerCase()
-  let pool = TOPIC_IMAGES.default
-  for (const [topic, imgs] of Object.entries(TOPIC_IMAGES)) {
-    if (kw.includes(topic)) { pool = imgs; break }
+  const kw = keyword.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  let topic = 'default'
+  for (const [fragment, mapped] of Object.entries(KEYWORD_MAP)) {
+    if (kw.includes(fragment)) { topic = mapped; break }
   }
+  const pool = TOPIC_IMAGES[topic] ?? TOPIC_IMAGES.default
   const photoId = pool[Math.floor(Math.random() * pool.length)]
   return `https://images.unsplash.com/${photoId}?w=1200&q=80`
 }
@@ -102,7 +137,8 @@ INSTRUCCIONES:
 - NO repitas la keyword de forma artificial — úsala donde encaje naturalmente
 - Estructura el artículo con H2 y H3 semánticos (no los numeres)
 - Incluye al menos una tabla comparativa si es relevante
-- Menciona rangos de precios reales en euros (aprox. 2025-2026)
+- Menciona rangos de precios reales en euros (precios de 2026)
+- Cuando menciones el año en el título o contenido, usa SIEMPRE 2026, nunca 2025
 - Añade advertencias o contras donde sea honesto hacerlo
 
 ESTRUCTURA REQUERIDA (devuelve JSON válido):
