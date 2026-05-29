@@ -17,6 +17,7 @@ export interface Article {
   faqs: FAQ[] | null
   reading_time: number
   word_count: number
+  image_url: string | null
   published_at: string | null
   created_at: string
   updated_at: string

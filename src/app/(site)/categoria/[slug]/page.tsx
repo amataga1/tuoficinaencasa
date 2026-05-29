@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getCategories, getArticlesByCategory } from '@/lib/queries'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -44,7 +45,13 @@ async function CategoryContent({ slug }: { slug: string }) {
           {articles.map((article) => (
             <Link key={article.id} href={`/articulo/${article.slug}`}
               className="group flex flex-col border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-              <div className="bg-gray-100 aspect-video flex items-center justify-center text-gray-400 text-xs">Imagen</div>
+              <div className="aspect-video overflow-hidden bg-gray-100 relative">
+                {article.image_url ? (
+                  <Image src={article.image_url} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sin imagen</div>
+                )}
+              </div>
               <div className="p-5 flex flex-col flex-1">
                 <h2 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                   {article.title}

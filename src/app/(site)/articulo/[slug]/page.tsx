@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getArticleBySlug, getRelatedArticles } from '@/lib/queries'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import type { Article, FAQ } from '@/types'
 
@@ -86,9 +87,18 @@ async function ArticleContent({ slug }: { slug: string }) {
           </div>
         </header>
 
-        <div className="bg-gray-100 rounded-2xl aspect-video flex items-center justify-center text-gray-400 text-sm mb-10">
-          Imagen principal del artículo
-        </div>
+        {article.image_url && (
+          <div className="rounded-2xl aspect-video overflow-hidden relative mb-10">
+            <Image
+              src={article.image_url}
+              alt={article.title}
+              fill
+              className="object-cover"
+              priority
+              unoptimized
+            />
+          </div>
+        )}
 
         <article
           className="prose prose-gray max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline"

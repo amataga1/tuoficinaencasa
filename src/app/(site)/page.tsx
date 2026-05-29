@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getPublishedArticles, getCategories } from '@/lib/queries'
 import { formatDate } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -24,8 +25,12 @@ export default async function HomePage() {
       {featured && (
         <section className="mb-16">
           <Link href={`/articulo/${featured.slug}`} className="group grid md:grid-cols-2 gap-8 items-center">
-            <div className="bg-gray-100 rounded-2xl aspect-video flex items-center justify-center text-gray-400 text-sm">
-              Imagen destacada
+            <div className="rounded-2xl aspect-video overflow-hidden bg-gray-100 relative">
+              {featured.image_url ? (
+                <Image src={featured.image_url} alt={featured.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">Sin imagen</div>
+              )}
             </div>
             <div>
               {featured.category && (
@@ -74,8 +79,12 @@ export default async function HomePage() {
                 href={`/articulo/${article.slug}`}
                 className="group flex flex-col border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="bg-gray-100 aspect-video flex items-center justify-center text-gray-400 text-xs">
-                  Imagen
+                <div className="aspect-video overflow-hidden bg-gray-100 relative">
+                  {article.image_url ? (
+                    <Image src={article.image_url} alt={article.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sin imagen</div>
+                  )}
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   {article.category && (

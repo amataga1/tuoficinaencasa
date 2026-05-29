@@ -5,6 +5,24 @@ import slugify from 'slugify'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+async function fetchUnsplashImage(keyword: string): Promise<string | null> {
+  try {
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY
+    if (!accessKey) {
+      // Fallback: use source.unsplash.com (no key needed, random relevant photo)
+      const query = encodeURIComponent(keyword.split(' ').slice(0, 3).join(' '))
+      return `https://source.unsplash.com/1200x630/?${query}`
+    }
+    const q = encodeURIComponent(keyword)
+    const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.urls?.regular ?? null
+  } catch {
+    return null
+  }
+}
+
 function buildPrompt(keyword: string, intent: string, categoryName: string): string {
   return `Eres un experto redactor de contenido especializado en home office y equipamiento para trabajar desde casa en España. Tu contenido es útil, original, bien documentado y está dirigido a personas reales que buscan información de calidad.
 
@@ -69,6 +87,7 @@ export async function POST(request: NextRequest) {
       parsed = JSON.parse(match[0])
     }
 
+    const imageUrl = await fetchUnsplashImage(keyword)
     const wordCount = String(parsed.content).split(/\s+/).filter(Boolean).length
     const baseSlug = slugify(String(parsed.slug || parsed.title), { lower: true, strict: true, locale: 'es' })
 
@@ -95,6 +114,7 @@ export async function POST(request: NextRequest) {
         meta_description: parsed.meta_description,
         focus_keyword: keyword,
         category_id: categoryId,
+        image_url: imageUrl,
         faqs: parsed.faqs,
         word_count: wordCount,
         reading_time: Math.ceil(wordCount / 200),
