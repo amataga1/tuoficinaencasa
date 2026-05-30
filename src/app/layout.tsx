@@ -39,7 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('js', new Date());
           gtag('config', 'G-XKXB89V4D5');
         `}} />
-        {/* Pinterest */}
+        {/* Pinterest verification */}
+        <meta name="p:domain_verify" content="bbe5ccb23567a77f15a5e78c3d7359dd" />
         <script async defer src="//assets.pinterest.com/js/pinit.js" />
         {/* Google AdSense */}
         <script
