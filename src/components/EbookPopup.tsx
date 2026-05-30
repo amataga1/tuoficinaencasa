@@ -8,7 +8,7 @@ export default function EbookPopup() {
 
   useEffect(() => {
     // Show after 40 seconds or on exit intent, only once per session
-    const dismissed = sessionStorage.getItem('ebook-popup-dismissed')
+    const dismissed = localStorage.getItem('ebook-popup-dismissed')
     if (dismissed) return
 
     // Timer: show after 40s
@@ -27,7 +27,7 @@ export default function EbookPopup() {
   }, [])
 
   function dismiss() {
-    sessionStorage.setItem('ebook-popup-dismissed', '1')
+    localStorage.setItem('ebook-popup-dismissed', '1')
     setVisible(false)
   }
 

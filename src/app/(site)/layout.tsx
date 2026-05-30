@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getCategories } from '@/lib/queries'
 import CookieBanner from '@/components/CookieBanner'
 import EbookPopup from '@/components/EbookPopup'
+import EbookBanner from '@/components/EbookBanner'
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const categories = await getCategories()
@@ -9,13 +10,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <>
       {/* Header */}
-      {/* Ebook top banner */}
-      <div className="bg-blue-600 text-white text-center py-2 px-4 text-sm">
-        <span className="font-medium">📘 Guía gratis: </span>
-        <Link href="/ebook" className="underline hover:text-blue-200 font-semibold">
-          Monta tu home office perfecto con menos de 500€ →
-        </Link>
-      </div>
+      <EbookBanner />
 
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
