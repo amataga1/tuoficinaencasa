@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import type { Article, FAQ } from '@/types'
+import PinterestButton from '@/components/PinterestButton'
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await props.params
@@ -107,6 +108,13 @@ async function ArticleContent({ slug }: { slug: string }) {
             <span className="bg-gray-100 px-2.5 py-1 rounded-full font-medium text-gray-600">
               {article.word_count} palabras
             </span>
+            {article.image_url && (
+              <PinterestButton
+                imageUrl={article.image_url}
+                title={article.title}
+                url={`${process.env.NEXT_PUBLIC_SITE_URL}/articulo/${article.slug}`}
+              />
+            )}
           </div>
         </header>
 

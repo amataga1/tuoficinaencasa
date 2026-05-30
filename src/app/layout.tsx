@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
+  other: {
+    // Pinterest Rich Pins — se activa en pinterest.com/website/verify
+    'og:site_name': siteName,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('js', new Date());
           gtag('config', 'G-XKXB89V4D5');
         `}} />
+        {/* Pinterest */}
+        <script async defer src="//assets.pinterest.com/js/pinit.js" />
         {/* Google AdSense */}
         <script
           async
