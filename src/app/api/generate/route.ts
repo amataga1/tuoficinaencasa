@@ -122,24 +122,42 @@ async function fetchUnsplashImage(keyword: string): Promise<string | null> {
   }
 }
 
+const AMAZON_TAG = process.env.NEXT_PUBLIC_AMAZON_AFFILIATE_TAG || 'setupoficina-21'
+
+function buildAmazonUrl(searchTerm: string): string {
+  return `https://www.amazon.es/s?k=${encodeURIComponent(searchTerm)}&tag=${AMAZON_TAG}`
+}
+
 function buildPrompt(keyword: string, intent: string, categoryName: string): string {
+  const amazonBase = `https://www.amazon.es/s?tag=${AMAZON_TAG}&k=`
   return `Eres un experto redactor de contenido especializado en home office y equipamiento para trabajar desde casa en España. Tu contenido es útil, original, bien documentado y está dirigido a personas reales que buscan información de calidad.
 
 KEYWORD PRINCIPAL: "${keyword}"
 INTENCIÓN DE BÚSQUEDA: ${intent}
 CATEGORÍA: ${categoryName}
+AMAZON AFFILIATE TAG: ${AMAZON_TAG}
 
-INSTRUCCIONES:
+INSTRUCCIONES DE CONTENIDO:
 - Escribe un artículo completo de 1800-2400 palabras en español
 - Usa un tono cercano pero profesional, como si lo escribiera un experto que también trabaja desde casa
 - Incluye datos reales, consejos prácticos y experiencias concretas
 - NO uses frases genéricas como "en el mundo actual" o "en los tiempos modernos"
 - NO repitas la keyword de forma artificial — úsala donde encaje naturalmente
 - Estructura el artículo con H2 y H3 semánticos (no los numeres)
-- Incluye al menos una tabla comparativa si es relevante
+- Incluye al menos una tabla comparativa de productos si es relevante
 - Menciona rangos de precios reales en euros (precios de 2026)
 - Cuando menciones el año en el título o contenido, usa SIEMPRE 2026, nunca 2025
 - Añade advertencias o contras donde sea honesto hacerlo
+
+INSTRUCCIONES DE LINKS DE AFILIADO (MUY IMPORTANTE):
+- Integra entre 4 y 8 links de Amazon de forma NATURAL dentro del texto HTML
+- Los links deben aparecer distribuidos a lo largo de todo el artículo, NO solo al final
+- Usa el formato: <a href="${amazonBase}TÉRMINO_DE_BÚSQUEDA" target="_blank" rel="nofollow sponsored" class="amazon-link">texto del link</a>
+- El "texto del link" debe ser natural, como: "ver precio en Amazon", "esta silla ergonómica", "comparar modelos", "ver opciones", etc.
+- Coloca links en contextos como: cuando menciones un producto específico, después de una recomendación, en tablas comparativas, al describir características
+- Ejemplo de uso en texto: "...una buena silla ergonómica como <a href="${amazonBase}silla+ergon%C3%B3mica+oficina" target="_blank" rel="nofollow sponsored" class="amazon-link">las que puedes ver en Amazon</a> puede marcar la diferencia..."
+- Ejemplo en tabla: <a href="${amazonBase}Herman+Miller+Aeron" target="_blank" rel="nofollow sponsored" class="amazon-link">Ver precio →</a>
+- Añade también al final del artículo un bloque destacado de llamada a la acción
 
 ESTRUCTURA REQUERIDA (devuelve JSON válido):
 {
@@ -148,7 +166,7 @@ ESTRUCTURA REQUERIDA (devuelve JSON válido):
   "excerpt": "Descripción de 150-160 chars que resume el artículo y por qué vale la pena leerlo",
   "meta_title": "Meta title SEO (50-60 chars)",
   "meta_description": "Meta description (145-160 chars, incluye llamada a la acción)",
-  "content": "HTML completo del artículo con H2, H3, párrafos, listas, tablas. Sin el H1.",
+  "content": "HTML completo del artículo con H2, H3, párrafos, listas, tablas Y links de Amazon integrados de forma natural. Sin el H1.",
   "faqs": [
     {"question": "Pregunta frecuente 1?", "answer": "Respuesta completa de 2-3 frases."},
     {"question": "Pregunta frecuente 2?", "answer": "Respuesta completa."},
