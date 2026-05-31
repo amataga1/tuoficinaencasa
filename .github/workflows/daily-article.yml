@@ -3,11 +3,16 @@ name: Daily Article Generator
 on:
   schedule:
     # Hora España en verano (CEST = UTC+2):
-    # 08:00 CEST = 06:00 UTC
-    # 13:00 CEST = 11:00 UTC
+    # 08:00 CEST = 06:00 UTC  → slot 0 (keywords índice par)
+    # 13:00 CEST = 11:00 UTC  → slot 1 (keywords índice impar)
     - cron: '0 6 * * *'
     - cron: '0 11 * * *'
-  workflow_dispatch:   # permite ejecutar manualmente desde GitHub Actions
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: 'Article slot (0=morning, 1=afternoon)'
+        required: false
+        default: '0'
 
 jobs:
   generate:
@@ -26,10 +31,22 @@ jobs:
       - name: Install dependencies
         run: npm install --omit=dev
 
-      - name: Generate and publish article
+      - name: Generate morning article (slot 0)
+        if: github.event.schedule == '0 6 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.slot == '0')
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           AMAZON_TAG: setupoficina-21
+          ARTICLE_SLOT: '0'
+        run: node scripts/generate-article.mjs
+
+      - name: Generate afternoon article (slot 1)
+        if: github.event.schedule == '0 11 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.slot == '1')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          AMAZON_TAG: setupoficina-21
+          ARTICLE_SLOT: '1'
         run: node scripts/generate-article.mjs

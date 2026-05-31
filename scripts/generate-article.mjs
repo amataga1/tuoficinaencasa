@@ -265,11 +265,15 @@ async function main() {
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY })
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-  // Find next unused keyword
+  // SLOT 0 = morning (08:00), SLOT 1 = afternoon (13:00)
+  // Each slot works only on its own parity index → no race condition
+  const slot = parseInt(process.env.ARTICLE_SLOT ?? '0', 10)
+  const slotBank = KEYWORD_BANK.filter((_, i) => i % 2 === slot)
+
   const { data: existing } = await supabase.from('articles').select('focus_keyword')
   const usedKeywords = new Set((existing || []).map(a => a.focus_keyword?.toLowerCase().trim()))
 
-  const next = KEYWORD_BANK.find(([kw]) => !usedKeywords.has(kw.toLowerCase().trim()))
+  const next = slotBank.find(([kw]) => !usedKeywords.has(kw.toLowerCase().trim()))
   if (!next) {
     console.log('All keywords used — add more to KEYWORD_BANK')
     process.exit(0)
