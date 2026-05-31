@@ -30,13 +30,18 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero section */}
-      <section className="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at 25% 25%, #3b82f6 0%, transparent 50%), radial-gradient(circle at 75% 75%, #06b6d4 0%, transparent 50%)'
-        }} />
+      <section className="relative text-white overflow-hidden" style={{ minHeight: '480px' }}>
+        <Image
+          src="https://images.unsplash.com/photo-1593640408182-31c228b42d1b?w=1600&q=80"
+          alt="Setup oficina en casa"
+          fill
+          className="object-cover object-center"
+          unoptimized
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/20" />
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 rounded-full px-4 py-1.5 text-sm text-blue-300 mb-6">
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
