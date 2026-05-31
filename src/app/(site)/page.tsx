@@ -30,14 +30,12 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero section */}
-      <section className="relative text-white overflow-hidden" style={{ minHeight: '480px' }}>
-        <Image
+      <section className="relative text-white overflow-hidden" style={{ minHeight: '520px', position: 'relative' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="https://images.unsplash.com/photo-1593640408182-31c228b42d1b?w=1600&q=80"
           alt="Setup oficina en casa"
-          fill
-          className="object-cover object-center"
-          unoptimized
-          priority
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/20" />
 
