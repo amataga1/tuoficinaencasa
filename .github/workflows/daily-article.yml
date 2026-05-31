@@ -1,0 +1,39 @@
+name: Daily Article Generator
+
+on:
+  schedule:
+    # 08:00 hora España (CEST = UTC+2 en verano, CET = UTC+1 en invierno)
+    # En verano (mayo–octubre): 06:00 UTC = 08:00 CEST
+    # En invierno (nov–abril): 07:00 UTC = 08:00 CET
+    # Usamos 06:00 UTC para verano (ajusta a 07:00 en invierno si hace falta)
+    - cron: '0 6 * * *'
+  workflow_dispatch:   # permite ejecutar manualmente desde GitHub Actions
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: seo-platform/package-lock.json
+
+      - name: Install dependencies
+        working-directory: seo-platform
+        run: npm ci --omit=dev
+
+      - name: Generate and publish article
+        working-directory: seo-platform
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          AMAZON_TAG: setupoficina-21
+        run: node scripts/generate-article.mjs

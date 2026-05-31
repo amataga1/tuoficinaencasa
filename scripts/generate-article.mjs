@@ -1,10 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+#!/usr/bin/env node
+/**
+ * Standalone article generator — runs in GitHub Actions (no Vercel timeout).
+ * Usage: node scripts/generate-article.mjs
+ * Env vars required: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, AMAZON_TAG (optional)
+ */
 
-// Bank of 200 keywords to consume one per day
-// Each entry: [keyword, categoryId, categoryName]
-const KEYWORD_BANK: [string, string, string][] = [
-  // Sillas de Oficina
+import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
+import slugify from 'slugify'
+
+const AMAZON_TAG = process.env.AMAZON_TAG || 'setupoficina-21'
+
+// ─── Keyword bank (same list as route.ts) ───────────────────────────────────
+const KEYWORD_BANK = [
   ['mejor silla de oficina para teletrabajar todo el día', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['silla ergonómica con reposacabezas para oficina', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['diferencia entre silla ergonómica y silla normal', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
@@ -20,7 +28,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['silla de oficina para personas con sobrepeso reforzada', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['Secretlab Titan como silla de oficina diaria', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['silla de pelota para trabajar desde casa beneficios', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
-  // Escritorios
   ['escritorio con almacenamiento integrado home office', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['escritorio de madera maciza para home office', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['IKEA Bekant escritorio elevable opinión 2026', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
@@ -36,7 +43,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['escritorio esquinero ikea para oficina en casa', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['tapete protector suelo escritorio cuál elegir', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['escritorio industrial estilo loft home office', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
-  // Monitores
   ['monitor 1440p vs 4K para trabajar cuál elegir', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['mejor monitor económico para home office menos de 300 euros', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['monitor IPS vs VA para trabajar diferencias', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
@@ -52,7 +58,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['brazo articulado monitor escritorio instalar', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['monitor gaming como monitor de trabajo sirve', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['Samsung monitor curvo 34 vs 27 pulgadas flat', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
-  // Iluminación
   ['pantalla azul cómo reducir fatiga visual trabajando', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
   ['iluminación indirecta escritorio sin reflejos pantalla', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
   ['Elgato Key Light Air análisis home office', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
@@ -63,7 +68,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['iluminación home office con Philips Hue', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
   ['cómo iluminar fondo videollamadas profesional sin gastar', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
   ['BenQ ScreenBar lámpara monitor análisis', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Iluminación'],
-  // Productividad
   ['cómo montar setup trabajo remoto profesional desde cero', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
   ['herramientas esenciales para trabajar desde casa', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
   ['mejores soportes de portátil para escritorio 2026', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
@@ -111,8 +115,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['qué resolución de monitor necesito para home office', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['HDMI vs DisplayPort para conectar monitor diferencias', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
   ['Asus ProArt monitor para diseño y trabajo análisis', '6936d412-dfc4-439a-aead-68390705cbfe', 'Monitores'],
-
-  // Periféricos (nuevas categorías)
   ['mejor teclado mecánico para programadores 2026', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
   ['ratón vertical ergonómico análisis vale la pena', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
   ['Logitech MX Master 3S vs MX Master 3 diferencias', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
@@ -128,8 +130,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['soporte tablet escritorio trabajo para iPad', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
   ['cámara Sony ZV-E10 como webcam home office', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
   ['Elgato Wave 3 micrófono análisis home office', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Periféricos'],
-
-  // Ergonomía (nueva categoría)
   ['postura correcta trabajar ordenador guía completa', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
   ['dolor de cuello trabajando ordenador causas soluciones', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
   ['altura monitor correcta para evitar cervicales', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
@@ -143,8 +143,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['reposamuñecas teclado cuándo es necesario', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
   ['fatiga visual digital síntomas y soluciones', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
   ['gafas con filtro luz azul para trabajar ordenador', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Ergonomía'],
-
-  // Gadgets (nueva categoría)
   ['gadgets productividad imprescindibles home office 2026', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Gadgets'],
   ['cargador GaN 100W escritorio análisis', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Gadgets'],
   ['regleta con USB para escritorio cuál elegir', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Gadgets'],
@@ -158,8 +156,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['cafetera compacta escritorio para teletrabajar', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Gadgets'],
   ['luz nocturna escritorio para trabajar tarde noche', '385453c6-8fe7-40ea-80c9-97d5034a511a', 'Gadgets'],
   ['smartwatch para productividad home office', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Gadgets'],
-
-  // Más escritorios y sillas
   ['escritorio con ruedas para mover fácilmente', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['escritorio de cristal home office pros y contras', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
   ['escritorio industrial tubería home office DIY', 'b7bc3033-56af-4891-b9ff-7ac276bebf0c', 'Escritorios'],
@@ -170,8 +166,6 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['Autonomous ErgoChair Pro análisis 2026', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['Haworth Fern silla oficina análisis vale la pena', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
   ['silla ergonómica niños adolescentes estudiar casa', 'b830b59d-98f2-4fe5-a757-6d32442790f7', 'Sillas de Oficina'],
-
-  // Productividad y bienestar
   ['música para concentrarse trabajando desde casa', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
   ['temperatura ideal habitación para trabajar productivo', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
   ['colores pared despacho en casa que aumentan productividad', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
@@ -189,69 +183,157 @@ const KEYWORD_BANK: [string, string, string][] = [
   ['mejores fondos de pantalla productividad home office', 'e6e57509-16fd-4c8a-93dd-15aec60dd932', 'Productividad'],
 ]
 
-export const maxDuration = 300 // 5 minutes — requires Vercel Pro or configured project
-
-export async function GET(request: NextRequest) {
-  // Verify this is called by Vercel Cron
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const supabase = await createServiceClient()
-
-  try {
-    // Find next keyword not yet used
-    const { data: existing } = await supabase
-      .from('articles')
-      .select('focus_keyword')
-
-    const usedKeywords = new Set((existing || []).map((a: { focus_keyword: string }) =>
-      a.focus_keyword?.toLowerCase().trim()
-    ))
-
-    const next = KEYWORD_BANK.find(([kw]) =>
-      !usedKeywords.has(kw.toLowerCase().trim())
-    )
-
-    if (!next) {
-      return NextResponse.json({ message: 'All keywords used — add more to KEYWORD_BANK' })
-    }
-
-    const [keyword, categoryId, categoryName] = next
-
-    // Call generate API directly (same host, internal)
-    const host = request.headers.get('host') || 'setupoficina.es'
-    const protocol = host.includes('localhost') ? 'http' : 'https'
-    const res = await fetch(`${protocol}://${host}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword, categoryId, categoryName, intent: 'informational' }),
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`Generate failed: ${err}`)
-    }
-
-    const data = await res.json()
-
-    // Auto-publish
-    await supabase
-      .from('articles')
-      .update({ status: 'published', published_at: new Date().toISOString() })
-      .eq('id', data.article.id)
-
-    return NextResponse.json({
-      ok: true,
-      article: data.article.title,
-      keyword,
-    })
-  } catch (err) {
-    console.error('Cron error:', err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
-      { status: 500 }
-    )
-  }
+// ─── Image helpers ───────────────────────────────────────────────────────────
+const TOPIC_IMAGES = {
+  silla: ['photo-1589884629038-b631346a23c4','photo-1598300042247-d088f8ab3a91','photo-1555041469-a586c61ea9bc','photo-1567538096630-e0c55bd6374c'],
+  escritorio: ['photo-1593640408182-31c228b42d1b','photo-1611269154421-4e27233ac5c7','photo-1593642632559-0c6d3fc62b89','photo-1518455027359-f3f8164ba6bd'],
+  monitor: ['photo-1527443224154-c4a3942d3acf','photo-1547082299-de196ea013d6','photo-1587202372634-32705e3bf49c','photo-1593642702821-c8da6771f0c6'],
+  iluminacion: ['photo-1513506003901-1e6a35fb5977','photo-1507003211169-0a1dd7228f2d','photo-1555680202-c86f0e12f086','photo-1616628188859-7a11abb6fcc9'],
+  teclado: ['photo-1587829741301-dc798b83add3','photo-1618384887929-16ec33fab9ef','photo-1541140532154-b024d705b90a','photo-1614680376573-df3480f0c6b8'],
+  raton: ['photo-1527864550417-7fd91fc51a46','photo-1613141412572-8b8d1b5e1c53','photo-1587829741301-dc798b83add3','photo-1616400619175-5beda3a17896'],
+  auricular: ['photo-1505740420928-5e560c06d30e','photo-1484704849700-f032a568e944','photo-1546435770-a3e426bf472b','photo-1583394838336-acd977736f90'],
+  webcam: ['photo-1587825140708-dfaf72ae4b04','photo-1593642632559-0c6d3fc62b89','photo-1611532736597-de2d4265fba3','photo-1516387938699-a927048f1897'],
+  microfono: ['photo-1478737270239-2f02b77fc618','photo-1593642632559-0c6d3fc62b89','photo-1598550476439-6847785fcea6','photo-1525201548942-d8732f6617a0'],
+  default: ['photo-1497366216548-37526070297c','photo-1497366811353-6870744d04b2','photo-1486312338219-ce68d2c6f44d','photo-1611532736597-de2d4265fba3','photo-1593079831268-3381b0db4a77','photo-1524758631624-e2822e304c36'],
 }
+
+const KEYWORD_MAP = {
+  silla:'silla',sillas:'silla',lumbar:'silla',ergon:'silla',asiento:'silla',
+  escritorio:'escritorio',desk:'escritorio',mesa:'escritorio',elevable:'escritorio',
+  monitor:'monitor',pantalla:'monitor',ultrawide:'monitor',curvo:'monitor',
+  iluminaci:'iluminacion',luz:'iluminacion',lampara:'iluminacion',led:'iluminacion',
+  teclado:'teclado',mec:'teclado',
+  rat:'raton',mouse:'raton',
+  auricul:'auricular',cascos:'auricular',
+  webcam:'webcam',camara:'webcam',
+  micro:'microfono',podcast:'microfono',
+}
+
+function getImageForKeyword(keyword) {
+  const kw = keyword.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  let topic = 'default'
+  for (const [fragment, mapped] of Object.entries(KEYWORD_MAP)) {
+    if (kw.includes(fragment)) { topic = mapped; break }
+  }
+  const pool = TOPIC_IMAGES[topic] ?? TOPIC_IMAGES.default
+  const photoId = pool[Math.floor(Math.random() * pool.length)]
+  return `https://images.unsplash.com/${photoId}?w=1200&q=80`
+}
+
+function buildPrompt(keyword, categoryName) {
+  const amazonBase = `https://www.amazon.es/s?tag=${AMAZON_TAG}&k=`
+  return `Eres un experto redactor de contenido especializado en home office y equipamiento para trabajar desde casa en España.
+
+KEYWORD PRINCIPAL: "${keyword}"
+CATEGORÍA: ${categoryName}
+AMAZON AFFILIATE TAG: ${AMAZON_TAG}
+
+INSTRUCCIONES:
+- Artículo completo de 1800-2400 palabras en español
+- Tono cercano pero profesional
+- Incluye datos reales, consejos prácticos
+- NO uses frases genéricas como "en el mundo actual"
+- Estructura con H2 y H3 semánticos
+- Incluye tabla comparativa si es relevante
+- Precios en euros (2026), usa SIEMPRE 2026, nunca 2025
+- Entre 4 y 8 links de Amazon integrados naturalmente: <a href="${amazonBase}TÉRMINO" target="_blank" rel="nofollow sponsored" class="amazon-link">texto</a>
+
+ESTRUCTURA JSON (devuelve ÚNICAMENTE el JSON):
+{
+  "title": "Título H1 SEO (50-65 chars)",
+  "slug": "slug-kebab-case",
+  "excerpt": "Descripción 150-160 chars",
+  "meta_title": "Meta title (50-60 chars)",
+  "meta_description": "Meta description (145-160 chars)",
+  "content": "HTML completo con H2, H3, párrafos, listas, tablas y links Amazon. Sin H1.",
+  "faqs": [
+    {"question": "Pregunta 1?", "answer": "Respuesta 2-3 frases."},
+    {"question": "Pregunta 2?", "answer": "Respuesta."},
+    {"question": "Pregunta 3?", "answer": "Respuesta."}
+  ]
+}`
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+async function main() {
+  const { ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env
+  if (!ANTHROPIC_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    console.error('Missing env vars: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY')
+    process.exit(1)
+  }
+
+  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY })
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+  // Find next unused keyword
+  const { data: existing } = await supabase.from('articles').select('focus_keyword')
+  const usedKeywords = new Set((existing || []).map(a => a.focus_keyword?.toLowerCase().trim()))
+
+  const next = KEYWORD_BANK.find(([kw]) => !usedKeywords.has(kw.toLowerCase().trim()))
+  if (!next) {
+    console.log('All keywords used — add more to KEYWORD_BANK')
+    process.exit(0)
+  }
+
+  const [keyword, categoryId, categoryName] = next
+  console.log(`Generating article for: "${keyword}" (${categoryName})`)
+
+  // Call Anthropic directly — no timeout issue
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 8000,
+    messages: [{ role: 'user', content: buildPrompt(keyword, categoryName) }],
+  })
+
+  const raw = message.content[0].type === 'text' ? message.content[0].text : ''
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/)
+    if (!match) { console.error('Could not parse AI response'); process.exit(1) }
+    parsed = JSON.parse(match[0])
+  }
+
+  const imageUrl = getImageForKeyword(keyword)
+  const wordCount = String(parsed.content).split(/\s+/).filter(Boolean).length
+  const baseSlug = slugify(String(parsed.slug || parsed.title), { lower: true, strict: true, locale: 'es' })
+
+  // Unique slug
+  let slug = baseSlug
+  let attempt = 0
+  while (true) {
+    const { data } = await supabase.from('articles').select('id').eq('slug', slug).single()
+    if (!data) break
+    slug = `${baseSlug}-${++attempt}`
+  }
+
+  const { data: article, error } = await supabase
+    .from('articles')
+    .insert({
+      title: parsed.title,
+      slug,
+      excerpt: parsed.excerpt,
+      content: parsed.content,
+      meta_title: parsed.meta_title,
+      meta_description: parsed.meta_description,
+      focus_keyword: keyword,
+      category_id: categoryId,
+      image_url: imageUrl,
+      faqs: parsed.faqs,
+      word_count: wordCount,
+      reading_time: Math.ceil(wordCount / 200),
+      status: 'published',
+      published_at: new Date().toISOString(),
+    })
+    .select('id, title, slug')
+    .single()
+
+  if (error) { console.error('Supabase error:', error); process.exit(1) }
+
+  console.log(`✓ Published: "${article.title}"`)
+  console.log(`  Slug: ${article.slug}`)
+  console.log(`  Words: ${wordCount}`)
+}
+
+main().catch(err => { console.error(err); process.exit(1) })
