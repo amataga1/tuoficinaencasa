@@ -209,7 +209,30 @@ const KEYWORD_MAP = {
   micro:'microfono',podcast:'microfono',
 }
 
-function getImageForKeyword(keyword) {
+async function getImageForKeyword(keyword) {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY
+  if (accessKey) {
+    try {
+      const kwEn = keyword
+        .replace(/silla|sillas/gi, 'ergonomic chair')
+        .replace(/escritorio/gi, 'desk')
+        .replace(/monitor/gi, 'computer monitor')
+        .replace(/teclado/gi, 'keyboard')
+        .replace(/ratón|raton/gi, 'mouse')
+        .replace(/auricular|auriculares/gi, 'headphones')
+        .replace(/micrófono|microfono/gi, 'microphone')
+        .replace(/webcam|cámara/gi, 'webcam')
+        .replace(/iluminación|lampara/gi, 'desk lamp')
+        .replace(/home office|oficina en casa/gi, 'home office')
+      const q = encodeURIComponent(kwEn.substring(0, 50))
+      const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.urls?.regular) return data.urls.regular
+      }
+    } catch {}
+  }
+  // Fallback to curated pool
   const kw = keyword.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   let topic = 'default'
   for (const [fragment, mapped] of Object.entries(KEYWORD_MAP)) {
