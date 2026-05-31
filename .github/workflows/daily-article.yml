@@ -2,11 +2,11 @@ name: Daily Article Generator
 
 on:
   schedule:
-    # 08:00 hora España (CEST = UTC+2 en verano, CET = UTC+1 en invierno)
-    # En verano (mayo–octubre): 06:00 UTC = 08:00 CEST
-    # En invierno (nov–abril): 07:00 UTC = 08:00 CET
-    # Usamos 06:00 UTC para verano (ajusta a 07:00 en invierno si hace falta)
+    # Hora España en verano (CEST = UTC+2):
+    # 08:00 CEST = 06:00 UTC
+    # 13:00 CEST = 11:00 UTC
     - cron: '0 6 * * *'
+    - cron: '0 11 * * *'
   workflow_dispatch:   # permite ejecutar manualmente desde GitHub Actions
 
 jobs:
