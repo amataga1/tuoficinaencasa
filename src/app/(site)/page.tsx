@@ -33,7 +33,7 @@ export default async function HomePage() {
       <section className="relative text-white overflow-hidden" style={{ minHeight: '520px' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1593640408182-31c228b42d1b?w=1600&q=80"
+          src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80"
           alt=""
           aria-hidden="true"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', zIndex: 0 }}
