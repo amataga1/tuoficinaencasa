@@ -30,17 +30,17 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero section */}
-      <section
-        className="relative text-white"
-        style={{
-          minHeight: '520px',
-          backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.75), rgba(0,0,0,0.45)), url(https://images.unsplash.com/photo-1593640408182-31c228b42d1b?w=1600&q=80)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
+      <section className="relative text-white overflow-hidden" style={{ minHeight: '520px' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1593640408182-31c228b42d1b?w=1600&q=80"
+          alt=""
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', zIndex: 0 }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.78), rgba(0,0,0,0.45))', zIndex: 1 }} />
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28" style={{ zIndex: 2 }}>
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 rounded-full px-4 py-1.5 text-sm text-blue-300 mb-6">
               <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
