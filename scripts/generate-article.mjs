@@ -282,21 +282,26 @@ async function main() {
   const [keyword, categoryId, categoryName] = next
   console.log(`Generating article for: "${keyword}" (${categoryName})`)
 
-  // Call Anthropic directly — no timeout issue
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
-    messages: [{ role: 'user', content: buildPrompt(keyword, categoryName) }],
-  })
-
-  const raw = message.content[0].type === 'text' ? message.content[0].text : ''
+  // Call Anthropic with automatic retry on JSON parse failure
   let parsed
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/)
-    if (!match) { console.error('Could not parse AI response'); process.exit(1) }
-    parsed = JSON.parse(match[0])
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: buildPrompt(keyword, categoryName) }],
+    })
+    const raw = message.content[0].type === 'text' ? message.content[0].text : ''
+    try {
+      parsed = JSON.parse(raw)
+      break
+    } catch {
+      const match = raw.match(/\{[\s\S]*\}/)
+      if (match) {
+        try { parsed = JSON.parse(match[0]); break } catch {}
+      }
+      if (attempt === 3) { console.error('Could not parse AI response after 3 attempts'); process.exit(1) }
+      console.log(`JSON parse failed (attempt ${attempt}), retrying...`)
+    }
   }
 
   const imageUrl = getImageForKeyword(keyword)
