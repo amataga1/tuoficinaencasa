@@ -39,6 +39,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           AMAZON_TAG: setupoficina-21
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          SITE_URL: https://setupoficina.es
           ARTICLE_SLOT: '0'
         run: node scripts/generate-article.mjs
 
@@ -50,5 +51,6 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           AMAZON_TAG: setupoficina-21
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          SITE_URL: https://setupoficina.es
           ARTICLE_SLOT: '1'
         run: node scripts/generate-article.mjs
