@@ -243,7 +243,7 @@ async function getImageForKeyword(keyword) {
   return `https://images.unsplash.com/${photoId}?w=1200&q=80`
 }
 
-function buildPrompt(keyword, categoryName) {
+function buildPrompt(keyword, categoryName, related = []) {
   const amazonBase = `https://www.amazon.es/s?tag=${AMAZON_TAG}&k=`
   return `Eres un experto redactor de contenido especializado en home office y equipamiento para trabajar desde casa en España.
 
@@ -321,7 +321,7 @@ async function main() {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
-      messages: [{ role: 'user', content: buildPrompt(keyword, categoryName) }],
+      messages: [{ role: 'user', content: buildPrompt(keyword, categoryName, related) }],
     })
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
     try {
