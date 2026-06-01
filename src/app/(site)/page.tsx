@@ -76,9 +76,10 @@ export default async function HomePage() {
             </div>
             <Link href={`/articulo/${featured.slug}`}
               className="group grid md:grid-cols-2 gap-0 rounded-2xl overflow-hidden border border-gray-200 bg-white card-hover shadow-sm">
-              <div className="aspect-[4/3] md:aspect-auto overflow-hidden bg-gray-100 relative img-zoom">
+              <div className="aspect-[4/3] md:aspect-auto overflow-hidden bg-gray-100 relative img-zoom" style={{ minHeight: '280px' }}>
                 {featured.image_url ? (
-                  <Image src={featured.image_url} alt={featured.title} fill className="object-cover" unoptimized />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={featured.image_url} alt={featured.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                     <span className="text-4xl">🪑</span>
