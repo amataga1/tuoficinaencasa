@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Política de Cookies',
-  robots: { index: false, follow: false },
+  title: 'Política de Cookies | Setup Oficina',
 }
 
 export default function PoliticaCookies() {

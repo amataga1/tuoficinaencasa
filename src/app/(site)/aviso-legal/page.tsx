@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Aviso Legal',
   description: 'Aviso legal e información sobre el titular del sitio web.',
-  robots: { index: false, follow: false },
+  
 }
 
 const SITE = process.env.NEXT_PUBLIC_SITE_NAME || 'Tu Oficina en Casa'

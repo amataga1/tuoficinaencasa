@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
-  robots: { index: false, follow: false },
+  
 }
 
 const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL || 'https://tuoficinaencasa.com'
