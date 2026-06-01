@@ -186,7 +186,7 @@ const KEYWORD_BANK = [
 // ─── Image helpers ───────────────────────────────────────────────────────────
 const TOPIC_IMAGES = {
   silla: ['photo-1589884629038-b631346a23c4','photo-1598300042247-d088f8ab3a91','photo-1555041469-a586c61ea9bc','photo-1567538096630-e0c55bd6374c'],
-  escritorio: ['photo-1593640408182-31c228b42d1b','photo-1611269154421-4e27233ac5c7','photo-1593642632559-0c6d3fc62b89','photo-1518455027359-f3f8164ba6bd'],
+  escritorio: ['photo-1611269154421-4e27233ac5c7','photo-1593642632559-0c6d3fc62b89','photo-1518455027359-f3f8164ba6bd'],
   monitor: ['photo-1527443224154-c4a3942d3acf','photo-1547082299-de196ea013d6','photo-1587202372634-32705e3bf49c','photo-1593642702821-c8da6771f0c6'],
   iluminacion: ['photo-1513506003901-1e6a35fb5977','photo-1507003211169-0a1dd7228f2d','photo-1555680202-c86f0e12f086','photo-1616628188859-7a11abb6fcc9'],
   teclado: ['photo-1587829741301-dc798b83add3','photo-1618384887929-16ec33fab9ef','photo-1541140532154-b024d705b90a','photo-1614680376573-df3480f0c6b8'],
