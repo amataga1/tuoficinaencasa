@@ -337,7 +337,7 @@ async function main() {
     }
   }
 
-  const imageUrl = getImageForKeyword(keyword)
+  const imageUrl = await getImageForKeyword(keyword)
   const wordCount = String(parsed.content).split(/\s+/).filter(Boolean).length
   const baseSlug = slugify(String(parsed.slug || parsed.title), { lower: true, strict: true, locale: 'es' })
 
