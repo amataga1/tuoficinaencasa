@@ -275,7 +275,7 @@ INSTRUCCIONES:
 - Incluye tabla comparativa si es relevante
 - Precios en euros (2026), usa SIEMPRE 2026, nunca 2025
 - Entre 4 y 8 links de Amazon integrados naturalmente: <a href="${amazonBase}TÉRMINO" target="_blank" rel="nofollow sponsored" class="amazon-link">texto</a>
-- Enlaza naturalmente a 2-3 de estos artículos relacionados del sitio cuando sea relevante (usa el HTML exacto):
+- Enlaza naturalmente a 2-3 de estos artículos del sitio dentro del contenido cuando el contexto lo permita (usa el HTML exacto, NO los pongas todos juntos al final):
 ${related.length > 0 ? related.join('\n') : '(sin artículos relacionados aún)'}
 
 ESTRUCTURA JSON (devuelve ÚNICAMENTE el JSON):
@@ -333,7 +333,7 @@ async function main() {
     process.exit(0)
   }
 
-  const { data: existing } = await supabase.from('articles').select('focus_keyword, title, slug, image_url')
+  const { data: existing } = await supabase.from('articles').select('focus_keyword, title, slug, image_url, category_id')
   const usedKeywords = new Set((existing || []).map(a => a.focus_keyword?.toLowerCase().trim()))
   const usedImageUrls = new Set((existing || []).map(a => a.image_url).filter(Boolean))
 
@@ -346,12 +346,31 @@ async function main() {
   const [keyword, categoryId, categoryName] = next
   console.log(`Generating article for: "${keyword}" (${categoryName})`)
 
-  // Pick up to 6 related articles for internal linking
+  // Smart internal linking: same category first, then cross-category, scored by keyword overlap
   const siteUrl = process.env.SITE_URL || 'https://setupoficina.es'
   const published = (existing || []).filter(a => a.slug && a.title)
-  const related = published
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 6)
+  const currentWords = new Set(keyword.toLowerCase().split(/\s+/).filter(w => w.length > 3))
+
+  const scored = published.map(a => {
+    const titleWords = (a.title || '').toLowerCase().split(/\s+/)
+    const kwWords = (a.focus_keyword || '').toLowerCase().split(/\s+/)
+    const allWords = new Set([...titleWords, ...kwWords].filter(w => w.length > 3))
+    let score = 0
+    for (const w of currentWords) { if (allWords.has(w)) score++ }
+    return { ...a, score, sameCategory: a.category_id === categoryId }
+  })
+
+  const sameCat = scored
+    .filter(a => a.sameCategory)
+    .sort((a, b) => b.score - a.score || Math.random() - 0.5)
+    .slice(0, 3)
+
+  const otherCat = scored
+    .filter(a => !a.sameCategory)
+    .sort((a, b) => b.score - a.score || Math.random() - 0.5)
+    .slice(0, 3)
+
+  const related = [...sameCat, ...otherCat]
     .map(a => `- <a href="${siteUrl}/articulo/${a.slug}">${a.title}</a>`)
 
   // Call Anthropic with automatic retry on JSON parse failure
