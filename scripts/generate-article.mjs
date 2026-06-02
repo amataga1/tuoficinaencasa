@@ -209,37 +209,52 @@ const KEYWORD_MAP = {
   micro:'microfono',podcast:'microfono',
 }
 
-async function getImageForKeyword(keyword) {
+function extractPhotoId(url) {
+  const m = url.match(/\/(photo-[^/?]+)/)
+  return m ? m[1] : url
+}
+
+async function getImageForKeyword(keyword, usedImageUrls = new Set()) {
+  const usedIds = new Set([...usedImageUrls].map(extractPhotoId))
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
+
   if (accessKey) {
-    try {
-      const kwEn = keyword
-        .replace(/silla|sillas/gi, 'ergonomic chair')
-        .replace(/escritorio/gi, 'desk')
-        .replace(/monitor/gi, 'computer monitor')
-        .replace(/teclado/gi, 'keyboard')
-        .replace(/ratón|raton/gi, 'mouse')
-        .replace(/auricular|auriculares/gi, 'headphones')
-        .replace(/micrófono|microfono/gi, 'microphone')
-        .replace(/webcam|cámara/gi, 'webcam')
-        .replace(/iluminación|lampara/gi, 'desk lamp')
-        .replace(/home office|oficina en casa/gi, 'home office')
-      const q = encodeURIComponent(kwEn.substring(0, 50))
-      const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.urls?.regular) return data.urls.regular
-      }
-    } catch {}
+    const kwEn = keyword
+      .replace(/silla|sillas/gi, 'ergonomic chair')
+      .replace(/escritorio/gi, 'desk')
+      .replace(/monitor/gi, 'computer monitor')
+      .replace(/teclado/gi, 'keyboard')
+      .replace(/ratón|raton/gi, 'mouse')
+      .replace(/auricular|auriculares/gi, 'headphones')
+      .replace(/micrófono|microfono/gi, 'microphone')
+      .replace(/webcam|cámara/gi, 'webcam')
+      .replace(/iluminación|lampara/gi, 'desk lamp')
+      .replace(/home office|oficina en casa/gi, 'home office')
+    const q = encodeURIComponent(kwEn.substring(0, 50))
+    // Try up to 5 times to get a photo not already used
+    for (let i = 0; i < 5; i++) {
+      try {
+        const res = await fetch(`https://api.unsplash.com/photos/random?query=${q}&orientation=landscape&client_id=${accessKey}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.urls?.regular && !usedIds.has(extractPhotoId(data.urls.regular))) {
+            return data.urls.regular
+          }
+        }
+      } catch {}
+    }
   }
-  // Fallback to curated pool
+
+  // Fallback: pick from topic pool filtering already-used IDs
   const kw = keyword.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   let topic = 'default'
   for (const [fragment, mapped] of Object.entries(KEYWORD_MAP)) {
     if (kw.includes(fragment)) { topic = mapped; break }
   }
   const pool = TOPIC_IMAGES[topic] ?? TOPIC_IMAGES.default
-  const photoId = pool[Math.floor(Math.random() * pool.length)]
+  const available = pool.filter(id => !usedIds.has(id))
+  const finalPool = available.length > 0 ? available : pool
+  const photoId = finalPool[Math.floor(Math.random() * finalPool.length)]
   return `https://images.unsplash.com/${photoId}?w=1200&q=80`
 }
 
@@ -318,8 +333,9 @@ async function main() {
     process.exit(0)
   }
 
-  const { data: existing } = await supabase.from('articles').select('focus_keyword, title, slug')
+  const { data: existing } = await supabase.from('articles').select('focus_keyword, title, slug, image_url')
   const usedKeywords = new Set((existing || []).map(a => a.focus_keyword?.toLowerCase().trim()))
+  const usedImageUrls = new Set((existing || []).map(a => a.image_url).filter(Boolean))
 
   const next = slotBank.find(([kw]) => !usedKeywords.has(kw.toLowerCase().trim()))
   if (!next) {
@@ -360,7 +376,7 @@ async function main() {
     }
   }
 
-  const imageUrl = await getImageForKeyword(keyword)
+  const imageUrl = await getImageForKeyword(keyword, usedImageUrls)
   const wordCount = String(parsed.content).split(/\s+/).filter(Boolean).length
   const baseSlug = slugify(String(parsed.slug || parsed.title), { lower: true, strict: true, locale: 'es' })
 
