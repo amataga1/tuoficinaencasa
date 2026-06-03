@@ -255,7 +255,7 @@ async function getImageForKeyword(keyword, usedImageUrls = new Set()) {
   const available = pool.filter(id => !usedIds.has(id))
   const finalPool = available.length > 0 ? available : pool
   const photoId = finalPool[Math.floor(Math.random() * finalPool.length)]
-  return `https://images.unsplash.com/${photoId}?w=1200&q=80`
+  return `https://images.unsplash.com/${photoId}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80`
 }
 
 function buildPrompt(keyword, categoryName, related = []) {
