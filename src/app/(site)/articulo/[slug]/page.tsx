@@ -131,6 +131,15 @@ async function ArticleContent({ slug }: { slug: string }) {
           </div>
         </header>
 
+        {/* Affiliate disclosure */}
+        <div className="mb-6 flex items-start gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-lg px-4 py-2.5">
+          <span className="flex-shrink-0 mt-0.5">ℹ️</span>
+          <span>
+            <strong className="text-gray-500">Aviso de transparencia:</strong> Este artículo puede contener enlaces de afiliado de Amazon. Si compras a través de ellos, recibimos una pequeña comisión sin coste adicional para ti. Esto no influye en nuestras recomendaciones.{' '}
+            <a href="/politica-de-privacidad" className="underline hover:text-blue-600">Más información</a>
+          </span>
+        </div>
+
         {/* Article body */}
         <article
           className="prose prose-lg prose-gray max-w-none
