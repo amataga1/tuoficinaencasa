@@ -100,6 +100,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
                 <li><Link href="/politica-de-privacidad" className="hover:text-white transition-colors">Privacidad</Link></li>
                 <li><Link href="/politica-de-cookies" className="hover:text-white transition-colors">Cookies</Link></li>
                 <li><Link href="/sobre-nosotros" className="hover:text-white transition-colors">Sobre nosotros</Link></li>
+                <li><Link href="/contacto" className="hover:text-white transition-colors">Contacto</Link></li>
               </ul>
             </div>
           </div>
