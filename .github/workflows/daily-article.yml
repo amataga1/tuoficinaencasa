@@ -43,6 +43,15 @@ jobs:
           ARTICLE_SLOT: '0'
         run: node scripts/generate-article.mjs
 
+      - name: Pin morning article to Pinterest
+        if: github.event.schedule == '0 6 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.slot == '0')
+        env:
+          PINTEREST_ACCESS_TOKEN: ${{ secrets.PINTEREST_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: https://setupoficina.es
+        run: node scripts/pin-article.mjs
+
       - name: Generate afternoon article (slot 1)
         if: github.event.schedule == '0 11 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.slot == '1')
         env:
@@ -54,3 +63,12 @@ jobs:
           SITE_URL: https://setupoficina.es
           ARTICLE_SLOT: '1'
         run: node scripts/generate-article.mjs
+
+      - name: Pin afternoon article to Pinterest
+        if: github.event.schedule == '0 11 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.slot == '1')
+        env:
+          PINTEREST_ACCESS_TOKEN: ${{ secrets.PINTEREST_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: https://setupoficina.es
+        run: node scripts/pin-article.mjs
